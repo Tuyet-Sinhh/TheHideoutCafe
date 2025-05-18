@@ -1,0 +1,607 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý đơn hàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      background: #f7f7f7;
+    }
+    .sidebar {
+      width: 280px;
+      background: #009944;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      transition: transform 0.3s ease;
+      z-index: 40;
+    }
+    .sidebar-hidden {
+      transform: translateX(-100%);
+    }
+    .logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    .logo img {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 10px;
+    }
+    .logo-name {
+      color: white;
+      font-size: 20px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-grow: 1;
+    }
+    .nav-item, .nav-item_active {
+      background: #d9d9d9;
+      padding: 10px;
+      border-radius: 20px;
+      text-align: center;
+      color: #383838;
+      font-weight: 600;
+      transition: all 0.3s;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .nav-item_active {
+      background: #b4ffab;
+      color: #383838;
+    }
+    .nav-item:hover {
+      background: #b4ffab;
+      color: #000;
+    }
+    .nav-item.logout {
+      margin-top: auto;
+      font-weight: 700;
+      background: #d9d9d9;
+      color: #dc2626;
+    }
+    .nav-item.logout:hover {
+      background: #b4ffab;
+      color: #b91c1c;
+    }
+    .main {
+      flex: 1;
+      padding: 24px;
+      margin-left: 280px;
+      width: 100%;
+      max-width: 1280px;
+      transition: margin-left 0.3s ease;
+    }
+    .main-full {
+      margin-left: 0;
+    }
+    .hamburger {
+      display: none;
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 50;
+      background: #009944;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .trang-thai {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+    }
+    .thanh-toan {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .btn {
+      padding: 4px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #374151;
+      background: white;
+    }
+    .btn:hover {
+      background: #f3f4f6;
+    }
+    .btn-active {
+      padding: 4px 12px;
+      border: 1px solid #3b82f6;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #2563eb;
+      background: #eff6ff;
+    }
+    .btn-green {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: white;
+      background: #009944;
+    }
+    .btn-green:hover {
+      background: #b4ffab;
+      color: #000;
+    }
+    .btn-gray {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #374151;
+      background: #d1d5db;
+    }
+    .btn-gray:hover {
+      background: #b4ffab;
+      color: #000;
+    }
+    .input, .select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #374151;
+    }
+    .input:focus, .select:focus {
+      outline: 2px solid #009944;
+      outline-offset: 2px;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .th {
+      padding: 8px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 500;
+      color: #6b7280;
+      text-transform: uppercase;
+      background: #f9fafb;
+    }
+    .td {
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #374151;
+      border-top: 1px solid #e5e7eb;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .modal-content h2 {
+      color: #009944;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .menu-item input[type="number"] {
+      width: 60px;
+      padding: 4px;
+    }
+    .total-money {
+      font-size: 16px;
+      font-weight: 600;
+      color: #009944;
+      margin-top: 16px;
+    }
+    .da-xac-nhan-status, .cho-xac-nhan-status { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .dang-che-bien-status, .dang-chuan-bi-status { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+    .dang-giao-status { background: #ede9fe; color: #6b21a8; border: 1px solid #c4b5fd; }
+    .hoan-thanh-status { background: #bfdbfe; color: #1e40af; border: 1px solid #93c5fd; }
+    .da-huy-status { background: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
+    .da-thanh-toan-dot { background: #22d3ee; }
+    .chua-thanh-toan-dot { background: #f87171; }
+    .status-select {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      background: inherit;
+      border: 1px solid transparent;
+      cursor: pointer;
+      color: inherit;
+    }
+    .status-select:focus {
+      outline: none;
+      border: 1px solid #009944;
+    }
+    .message {
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+    .message-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .message-error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .main {
+        margin-left: 0;
+        padding: 10px;
+      }
+      .hamburger {
+        display: block;
+      }
+      .modal-content {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="hamburger" onclick="toggleSidebar()">
+    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+  </button>
+
+  <div class="sidebar" id="sidebar">
+    <div class="logo">
+      <img src="{% static 'images/logo-removebg-preview.png' %}" alt="Logo" />
+      <div class="logo-name">THE HIDEOUT CAFE</div>
+    </div>
+    <div class="nav-menu">
+      <a href="{% url 'myapp:menu_management' %}" class="nav-item">Menu</a>
+      <a href="{% url 'myapp:order_list' %}" class="nav-item_active">Quản lý đơn hàng</a>
+      <div class="nav-item">Quản lý đặt bàn</div>
+      <div class="nav-item">Quản lý doanh thu</div>
+      <div class="nav-item">Quản lý bàn</div>
+      <div class="nav-item">Tin nhắn</div>
+      <div class="nav-item">Đánh giá</div>
+      <div class="nav-item">Quản lý voucher</div>
+      <div class="nav-item">Quản lý tài khoản</div>
+      <div class="nav-item">Thông báo</div>
+      <div class="nav-item" style="margin-top: 20px; font-weight: 700;">Đăng xuất</div>
+    </div>
+  </div>
+
+  <!-- Modal tạo đơn -->
+  <div class="modal" id="create-order-modal">
+    <div class="modal-content">
+      <h2>Tạo đơn hàng mới</h2>
+      <form id="create-order-form" method="POST" action="{% url 'myapp:create_order' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="customer">Khách hàng</label>
+          <input type="text" id="customer" name="ten_khach_hang" class="input" required>
+        </div>
+        <div class="form-group">
+          <label for="order-type">Loại đơn hàng</label>
+          <select id="order-type" name="loai_don_hang" class="select">
+            {% for value, label in loai_don_hang_choices %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="status">Trạng thái</label>
+          <select id="status" name="trang_thai" class="select">
+            {% for value, label in trang_thai_choices %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="payment">Thanh toán</label>
+          <select id="payment" name="thanh_toan" class="select">
+            {% for value, label in thanh_toan_choices %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="address">Địa chỉ</label>
+          <input type="text" id="address" name="dia_chi" class="input" placeholder="Chỉ nhập cho đơn Trực tuyến">
+        </div>
+        <div class="form-group">
+          <label for="create-date">Ngày tạo</label>
+          <input type="date" id="create-date" name="ngay_tao" class="input" value="{{ today|date:'Y-m-d' }}">
+        </div>
+        <div class="form-group">
+          <label>Món ăn</label>
+          {% for mon in thuc_don %}
+            <div class="menu-item">
+              <input type="checkbox" class="menu-checkbox" name="mon_an_{{ mon.ma_mon }}" data-price="{{ mon.gia_tien }}">
+              <span>{{ mon.ten_mon }}</span>
+              <input type="number" class="quantity" name="so_luong_{{ mon.ma_mon }}" min="0" value="0">
+            </div>
+          {% endfor %}
+        </div>
+        <div class="total-money" id="total-money">Tổng tiền: 0đ</div>
+        <div class="flex justify-end gap-4 mt-6">
+          <button type="button" class="btn-gray" onclick="closeModal()">Hủy</button>
+          <button type="submit" class="btn-green">Tạo đơn</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Nội dung chính -->
+  <div class="main" id="main-content">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <!-- Thông báo -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="message message-{% if message.tags == 'success' %}success{% else %}error{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Nút Quay lại -->
+      <div class="mb-4">
+        <button onclick="history.back()" class="flex items-center text-gray-600 hover:text-gray-800">
+          <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          Quay lại
+        </button>
+      </div>
+
+      <!-- Tiêu đề -->
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold text-gray-700">ĐƠN HÀNG</h1>
+        <button class="btn-green" onclick="openModal()">Tạo đơn</button>
+      </div>
+      <hr class="border-gray-200 mb-6">
+
+      <!-- Bộ lọc -->
+      <div class="flex gap-4 mb-6">
+        <div class="relative w-64">
+          <input type="text" id="search-input" placeholder="Tìm kiếm mã đơn" class="input">
+          <svg class="absolute right-3 top-2.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <select id="status-filter" class="select w-48">
+          <option value="">Tất cả trạng thái</option>
+          {% for value, label in trang_thai_choices %}
+            <option value="{{ label }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Bảng đơn hàng -->
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="th">Mã đơn</th>
+              <th class="th">Khách hàng</th>
+              <th class="th">Loại đơn hàng</th>
+              <th class="th">Trạng thái</th>
+              <th class="th">Tổng tiền</th>
+              <th class="th">Thanh toán</th>
+              <th class="th">Địa chỉ</th>
+              <th class="th">Ngày tạo</th>
+            </tr>
+          </thead>
+          <tbody id="order-table">
+            {% for don_hang in don_hang_list %}
+              <tr>
+                <td class="td">{{ don_hang.ma_don_hang }}</td>
+                <td class="td">{{ don_hang.ten_khach_hang }}</td>
+                <td class="td">{{ don_hang.get_loai_don_hang_display }}</td>
+                <td class="td">
+                  <form method="POST" action="{% url 'myapp:update_order_status' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="ma_don_hang" value="{{ don_hang.ma_don_hang }}">
+                    <select name="trang_thai" class="status-select {{ don_hang.trang_thai|slugify }}-status" onchange="this.form.submit()">
+                      {% for value, label in trang_thai_choices %}
+                        <option value="{{ value }}" {% if value == don_hang.trang_thai %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </form>
+                </td>
+                <td class="td">{{ don_hang.tong_tien|default:0|intcomma }}đ</td>
+                <td class="td thanh-toan">
+                  <span class="dot {{ don_hang.thanh_toan|slugify }}-dot"></span>
+                  <span>{{ don_hang.get_thanh_toan_display }}</span>
+                </td>
+                <td class="td">{{ don_hang.dia_chi|default:"" }}</td>
+                <td class="td">{{ don_hang.ngay_tao|date:"d/m/Y H:i A" }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td class="td" colspan="8">Không có đơn hàng nào.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Phân trang -->
+      <div class="mt-6 flex justify-between items-center">
+        <p class="text-sm text-gray-600">
+          Hiển thị <span class="font-medium">1</span> đến <span class="font-medium" id="result-count">{{ don_hang_list|length }}</span> trong <span class="font-medium" id="total-count">{{ don_hang_list|length }}</span> kết quả
+        </p>
+        <div class="flex gap-1">
+          <button class="btn">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <button class="btn-active">1</button>
+          <button class="btn">2</button>
+          <button class="btn">3</button>
+          <button class="btn">...</button>
+          <button class="btn">8</button>
+          <button class="btn">9</button>
+          <button class="btn">10</button>
+          <button class="btn">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('main-content');
+      sidebar.classList.toggle('sidebar-hidden');
+      main.classList.toggle('main-full');
+    }
+
+    function openModal() {
+      document.getElementById('create-order-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('create-order-modal').style.display = 'none';
+      resetForm();
+    }
+
+    function resetForm() {
+      document.getElementById('customer').value = '';
+      document.getElementById('order-type').value = 'truc_tuyen';
+      document.getElementById('status').value = 'da_xac_nhan';
+      document.getElementById('payment').value = 'da_thanh_toan';
+      document.getElementById('address').value = '';
+      document.getElementById('create-date').value = '{{ today|date:"Y-m-d" }}';
+      document.querySelectorAll('.menu-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      document.querySelectorAll('.quantity').forEach(input => {
+        input.value = '0';
+      });
+      updateTotalMoney();
+    }
+
+    function updateTotalMoney() {
+      let total = 0;
+      document.querySelectorAll('.menu-item').forEach(item => {
+        const checkbox = item.querySelector('.menu-checkbox');
+        const quantity = parseInt(item.querySelector('.quantity').value) || 0;
+        const price = parseInt(checkbox.dataset.price);
+        if (checkbox.checked && quantity > 0) {
+          total += price * quantity;
+        }
+      });
+      document.getElementById('total-money').textContent = `Tổng tiền: ${total.toLocaleString()}đ`;
+    }
+
+    document.querySelectorAll('.menu-checkbox, .quantity').forEach(element => {
+      element.addEventListener('change', updateTotalMoney);
+    });
+
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const orderTable = document.getElementById('order-table');
+    const resultCount = document.getElementById('result-count');
+    const totalCount = document.getElementById('total-count');
+    let rows = Array.from(orderTable.getElementsByTagName('tr'));
+
+    function filterOrders() {
+      const searchText = searchInput.value.trim().toLowerCase();
+      const selectedStatus = statusFilter.value;
+      let visibleRows = 0;
+
+      rows.forEach(row => {
+        const orderId = row.cells[0].textContent.toLowerCase();
+        const statusElement = row.cells[3].querySelector('.status-select');
+        const status = statusElement.options[statusElement.selectedIndex].textContent;
+        const matchesSearch = orderId.includes(searchText);
+        const matchesStatus = selectedStatus === '' || status === selectedStatus;
+
+        if (matchesSearch && matchesStatus) {
+          row.style.display = '';
+          visibleRows++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      resultCount.textContent = visibleRows;
+      totalCount.textContent = rows.length;
+    }
+
+    searchInput.addEventListener('input', filterOrders);
+    statusFilter.addEventListener('change', filterOrders);
+    filterOrders();
+  </script>
+</body>
+</html>

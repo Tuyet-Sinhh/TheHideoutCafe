@@ -1,0 +1,452 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Hideout Cafe - Nhân viên</title>
+  <style>
+        * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  background: #f7f7f7;
+}
+
+.sidebar {
+  width: 280px;
+  background: #009944;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.logo img {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 10px;
+}
+
+.logo-name {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  background: #d9d9d9;
+  padding: 10px;
+  border-radius: 20px;
+  text-align: center;
+  color: #383838;
+  font-weight: 600;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: #b4ffab;
+  color: #000;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.menu-header h1 {
+  color: #5e5e5e;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.menu-item {
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: 0.3s;
+}
+
+.menu-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.menu-item img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.menu-item .item-name {
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #5e5e5e;
+}
+
+.menu-item .actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.actions div {
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.edit-btn {
+  background: #009944;
+  color: white;
+}
+
+.edit-btn:hover {
+  background: #007b33;
+}
+
+.hide-btn {
+  background: #cecece;
+  color: white;
+}
+
+.hide-btn:hover {
+  background: #a8a8a8;
+}
+
+.hidden-item {
+  opacity: 0.5;
+  pointer-events: auto;
+}
+
+/* Overlay và Form chung */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.form-container {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.form-header span {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.save-btn {
+  width: 100%;
+  background: #009944;
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.save-btn:hover {
+  background: #007b33;
+}
+
+/* Confirm Dialog */
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.confirm-dialog {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 350px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.confirm-dialog h3 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #5e5e5e;
+}
+
+.confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.cancel-btn {
+  background: #cecece;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.cancel-btn:hover {
+  background: #a8a8a8;
+}
+
+.confirm-btn {
+  background: #ff4444;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.confirm-btn:hover {
+  background: #cc0000;
+}
+
+@media screen and (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+  .main-content {
+    padding: 10px;
+  }
+  .menu-item img {
+    height: 160px;
+  }
+}
+
+/* Thông báo */
+.success {
+  color: #009944;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.error {
+  color: #ff4444;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      <img src="{% static 'images/logo-removebg-preview.png' %}" alt="Logo" />
+      <div class="logo-name">THE HIDEOUT CAFE</div>
+    </div>
+    <div class="nav-menu">
+      <div class="nav-item active">Menu</div>
+      <div class="nav-item">Quản lý đơn hàng</div>
+      <div class="nav-item">Quản lý đặt bàn</div>
+      <div class="nav-item">Đánh giá</div>
+      <div class="nav-item">Quản lý voucher</div>
+      <div class="nav-item">Tin nhắn</div>
+      <div class="nav-item">Thông báo</div>
+      <div class="nav-item" style="margin-top: 20px; font-weight: 700;">
+        <a href="{% url 'logout' %}" style="text-decoration: none; color: inherit;">Đăng xuất</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="menu-header">
+      <h1>QUẢN LÝ MENU</h1>
+    </div>
+    {% if messages %}
+      {% for message in messages %}
+        <p {% if message.tags %}class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+    <div class="menu-grid">
+      {% for mon in thuc_don %}
+      <div class="menu-item {% if mon.da_an %}hidden-item{% endif %}" data-id="{{ mon.ma_mon }}">
+        <img src="{{ mon.hinh_anh.url|default:'/static/images/default.jpg' }}" alt="{{ mon.ten_mon }}">
+        <div class="item-name">{{ mon.ten_mon }}<br>{{ mon.gia_tien }}đ</div>
+        <div class="actions">
+          <div class="edit-btn" onclick="showEditForm('{{ mon.ten_mon }}', '{{ mon.gia_tien }}', {{ mon.ma_mon }})">Sửa</div>
+          <div class="hide-btn" onclick="showConfirmDialog({{ mon.ma_mon }}, {{ mon.da_an|yesno:'true,false' }})">
+            {% if mon.da_an %}Hiện lại{% else %}Ẩn{% endif %}
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <p>Chưa có món nào trong thực đơn.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Overlay for Edit Form -->
+  <div class="overlay" id="edit-overlay">
+    <div class="form-container">
+      <div class="form-header">
+        <span>SỬA THÔNG TIN MÓN</span>
+        <button class="close-btn" onclick="hideEditForm()">×</button>
+      </div>
+      <form id="edit-form" method="POST" enctype="multipart/form-data" action="{% url 'edit_menu_item_nhanvien' %}">
+        {% csrf_token %}
+        <input type="hidden" name="ma_mon" id="edit-id">
+        <div class="form-group">
+          <label>Tên món</label>
+          <input type="text" name="ten_mon" id="edit-name" placeholder="Tên món" required>
+        </div>
+        <div class="form-group">
+          <label>Giá tiền</label>
+          <input type="number" name="gia_tien" id="edit-price" placeholder="Giá tiền" required>
+        </div>
+        <div class="form-group">
+          <label>Tải ảnh lên</label>
+          <input type="file" name="hinh_anh" id="edit-image" accept="image/*">
+        </div>
+        <button type="submit" class="save-btn">Lưu</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Hide/Unhide Dialog -->
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-dialog">
+      <h3 id="confirm-title">Xác nhận</h3>
+      <p id="confirm-message"></p>
+      <div class="confirm-buttons">
+        <button class="cancel-btn" onclick="hideConfirmDialog()">Hủy</button>
+        <form id="toggle-visibility-form" method="POST" action="{% url 'toggle_menu_item_visibility_nhanvien' %}">
+          {% csrf_token %}
+          <input type="hidden" name="ma_mon" id="toggle-id">
+          <input type="hidden" name="da_an" id="toggle-value">
+          <button type="submit" class="confirm-btn">Xác nhận</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showEditForm(name, price, id) {
+      document.getElementById("edit-name").value = name;
+      document.getElementById("edit-price").value = price;
+      document.getElementById("edit-id").value = id;
+      document.getElementById("edit-overlay").style.display = "flex";
+    }
+
+    function hideEditForm() {
+      document.getElementById("edit-overlay").style.display = "none";
+      document.getElementById("edit-form").reset();
+    }
+
+    function showConfirmDialog(id, isHidden) {
+      document.getElementById("toggle-id").value = id;
+      document.getElementById("toggle-value").value = isHidden ? "false" : "true";
+      document.getElementById("confirm-title").textContent = isHidden ? "Xác nhận hiện món" : "Xác nhận ẩn món";
+      document.getElementById("confirm-message").textContent = isHidden ?
+        "Bạn có chắc chắn muốn hiện lại món này không?" :
+        "Bạn có chắc chắn muốn ẩn món này không?";
+      document.getElementById("confirm-overlay").style.display = "flex";
+    }
+
+    function hideConfirmDialog() {
+      document.getElementById("confirm-overlay").style.display = "none";
+    }
+  </script>
+</body>
+</html>

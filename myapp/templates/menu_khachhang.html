@@ -1,0 +1,223 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Hideout Cafe - Khách hàng</title>
+   <style>
+    * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  background: #f7f7f7;
+}
+
+.sidebar {
+  width: 280px;
+  background: #009944;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.logo img {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 10px;
+}
+
+.logo-name {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  background: #d9d9d9;
+  padding: 10px;
+  border-radius: 20px;
+  text-align: center;
+  color: #383838;
+  font-weight: 600;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: #b4ffab;
+  color: #000;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.menu-header h1 {
+  color: #5e5e5e;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.menu-item {
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: 0.3s;
+}
+
+.menu-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.menu-item img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.menu-item .item-name {
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #5e5e5e;
+}
+
+.menu-item .actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.add-to-cart-btn {
+  background: #009944;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.add-to-cart-btn:hover {
+  background: #007b33;
+}
+
+@media screen and (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+  .main-content {
+    padding: 10px;
+  }
+  .menu-item img {
+    height: 160px;
+  }
+}
+
+/* Thông báo */
+.success {
+  color: #009944;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.error {
+  color: #ff4444;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      <img src="{% static 'images/logo-removebg-preview.png' %}" alt="Logo" />
+      <div class="logo-name">THE HIDEOUT CAFE</div>
+    </div>
+    <div class="nav-menu">
+      <div class="nav-item active">Menu</div>
+      <div class="nav-item">Đơn hàng của tôi</div>
+      <div class="nav-item">Đặt bàn</div>
+      <div class="nav-item">Đánh giá</div>
+      <div class="nav-item">Voucher</div>
+      <div class="nav-item">Tin nhắn</div>
+      <div class="nav-item">Thông báo</div>
+      <div class="nav-item" style="margin-top: 20px; font-weight: 700;">
+        <a href="{% url 'logout' %}" style="text-decoration: none; color: inherit;">Đăng xuất</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="menu-header">
+      <h1>THỰC ĐƠN HÔM NAY</h1>
+    </div>
+    {% if messages %}
+      {% for message in messages %}
+        <p {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+    <div class="menu-grid">
+      {% for mon in thuc_don %}
+      <div class="menu-item" data-id="{{ mon.ma_mon }}">
+        <img src="{{ mon.hinh_anh.url|default:'/static/images/default.jpg' }}" alt="{{ mon.ten_mon }}">
+        <div class="item-name">{{ mon.ten_mon }}<br>{{ mon.gia_tien }}đ</div>
+        <div class="actions">
+          <form method="POST" action="{% url 'add_to_cart' %}">
+            {% csrf_token %}
+            <input type="hidden" name="ma_mon" value="{{ mon.ma_mon }}">
+            <input type="hidden" name="so_luong" value="1">
+            <button type="submit" class="add-to-cart-btn">Thêm vào giỏ</button>
+          </form>
+        </div>
+      </div>
+      {% empty %}
+      <p>Chưa có món nào trong thực đơn.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+
+</body>
+</html>
